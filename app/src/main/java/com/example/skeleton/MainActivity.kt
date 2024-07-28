@@ -11,11 +11,17 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd
+import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,6 +39,9 @@ class MainActivity : AppCompatActivity() {
     //보상형광고
     private val REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
 
+    //보상형전면광고
+    private val REWARDED_FULL_SCREEN_AD_UNIT_ID = "ca-app-pub-3940256099942544/5354046379"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -47,7 +56,67 @@ class MainActivity : AppCompatActivity() {
         binding.showRewardedAd.setOnClickListener {
             showRewardedAd()
         }
+
+        binding.showRewardedFullScreenAd.setOnClickListener {
+            showRewardedFullScreenAd()
+        }
     }
+
+    //보상형 전면광고 띄우기 (베타라고 한다?)
+    //https://developers.google.com/admob/android/rewarded-interstitial?hl=ko
+    fun showRewardedFullScreenAd() {
+
+        CoroutineScope(Dispatchers.IO).launch {
+            //보상형 전면광고는 bg 스레드에서 해야된다고 한다
+            MobileAds.initialize(this@MainActivity) {}
+
+            withContext(Dispatchers.Main) {
+                val adRequest = AdRequest.Builder().build()
+                RewardedInterstitialAd.load(this@MainActivity, REWARDED_FULL_SCREEN_AD_UNIT_ID, adRequest, object : RewardedInterstitialAdLoadCallback() {
+                    override fun onAdFailedToLoad(p0: LoadAdError) {
+                        super.onAdFailedToLoad(p0)
+                        Log.d("kgpp", "onAdFailedToLoad")
+                    }
+
+                    override fun onAdLoaded(p0: RewardedInterstitialAd) {
+                        super.onAdLoaded(p0)
+                        Log.d("kgpp", "onAdLoaded")
+                        p0.fullScreenContentCallback = object : FullScreenContentCallback() {
+                            override fun onAdDismissedFullScreenContent() {
+                                super.onAdDismissedFullScreenContent()
+                                Log.d("kgpp", "onAdDismissedFullScreenContent")
+                            }
+
+                            override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+                                super.onAdFailedToShowFullScreenContent(p0)
+                                Log.d("kgpp", "onAdFailedToShowFullScreenContent")
+                            }
+
+                            override fun onAdShowedFullScreenContent() {
+                                super.onAdShowedFullScreenContent()
+                                Log.d("kgpp", "onAdShowedFullScreenContent")
+                            }
+
+                            override fun onAdImpression() {
+                                super.onAdImpression()
+                                Log.d("kgpp", "onAdImpression")
+                            }
+
+                            override fun onAdClicked() {
+                                super.onAdClicked()
+                                Log.d("kgpp", "onAdClicked")
+                            }
+                        }
+                        p0.show(this@MainActivity) {
+                            Log.d("kgpp", "onUserEarnedReward")
+                        }
+                    }
+                })
+
+            }
+        }
+    }
+
 
     //보상형 광고 띄우기
     //5초간 기다리면 보상을 준다?? 짧고 취소가능한듯?

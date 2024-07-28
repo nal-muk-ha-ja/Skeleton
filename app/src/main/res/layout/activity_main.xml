@@ -24,4 +24,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="보상형광고" />
+
+    <Button
+        android:id="@+id/showRewardedFullScreenAd"
+        android:text="보상형 전면광고"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 </LinearLayout>
